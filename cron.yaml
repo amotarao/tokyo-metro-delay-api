@@ -1,0 +1,6 @@
+cron:
+- description: "job"
+  target: api
+  url: /cron.php
+  schedule: every 5 minutes from 05:00 to 23:59
+  timezone: Asia/Tokyo
