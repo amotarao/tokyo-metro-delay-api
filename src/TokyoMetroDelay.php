@@ -30,8 +30,14 @@ class TokyoMetroDelay
 
     public function __construct($param = null)
     {
+        /**
+         * Firebase 接続
+         */
         $this->firebase = new FirebaseLib(FIREBASE_URL, FIREBASE_TOKEN);
 
+        /**
+         * 現在の日付・タイムゾーン 取得
+         */
         $this->time = array(
             "year"     => (string)date("Y", strtotime("-3 hour")),
             "month"    => (string)date("m", strtotime("-3 hour")),
@@ -43,12 +49,14 @@ class TokyoMetroDelay
 
         $action = (isset($this->param["action"])) ? $this->param["action"] . "Action" : "setAction";
 
-        // actionが見当たらない場合、404
+        /**
+         * Actionが見当たらない場合、404 Error を返す
+         */
         if (!method_exists($this, $action)) {
             header("HTTP/1.0 404 Not Found");
             exit;
         }
-        
+
         $this->$action();
     }
 
@@ -108,7 +116,7 @@ class TokyoMetroDelay
                 $month = $time["month"];
                 $date  = $time["date"];
 
-                $date = strtotime("-1 day", strtotime("{$year}/{$month}/{$date} 00:00:00"));
+                $date = strtotime("-1 day", strtotime("${year}/${month}/${date} 00:00:00"));
                 $time["year"]  = (string)date("Y", $date);
                 $time["month"] = (string)date("m", $date);
                 $time["date"]  = (string)date("d", $date);
@@ -302,7 +310,7 @@ class TokyoMetroDelay
                     if ($i == 1) continue;
 
                     $key = key($e);
-                    $this->deleteFirebaseDataFromKey("/{$key}");
+                    $this->deleteFirebaseDataFromKey("/${key}");
                 }
             }
 
@@ -357,7 +365,7 @@ class TokyoMetroDelay
             $update[$line] = array_merge($exists, $tmp);
         }
 
-        $this->updateFirebaseData("/{$key}/line", $update);
+        $this->updateFirebaseData("/${key}/line", $update);
     }
 
 
@@ -388,8 +396,8 @@ class TokyoMetroDelay
             $update[$line] = array_merge($exists, $tmp);
         }
 
-        $this->updateFirebaseData("/{$key}/line", $update);
-        $this->updateFirebaseData("/{$key}", array("@type"=>"log"));
+        $this->updateFirebaseData("/${key}/line", $update);
+        $this->updateFirebaseData("/${key}", array("@type"=>"log"));
     }
 
 
@@ -487,9 +495,9 @@ class TokyoMetroDelay
         $year  = $time["year"];
         $month = $time["month"];
         $date  = $time["date"];
-        $date = date("Ymd", strtotime("{$year}/{$month}/{$date} 00:00:00"));
+        $date = date("Ymd", strtotime("${year}/${month}/${date} 00:00:00"));
         $timezone = $this->encodeTimezone($time["timezone"]);
-        $url = "http://www.tokyometro.jp/delay/detail/{$date}/{$line}_{$timezone}.shtml";
+        $url = "http://www.tokyometro.jp/delay/detail/${date}/${line}_${timezone}.shtml";
         $context = stream_context_create(array(
             "http" => array("ignore_errors" => true)
         ));
@@ -556,7 +564,7 @@ class TokyoMetroDelay
 
         foreach ($this->lines as $line) {
 
-            $contents = file_get_contents("http://www.tokyometro.jp/delay/history/{$line}.html");
+            $contents = file_get_contents("http://www.tokyometro.jp/delay/history/${line}.html");
             $contents = str_replace('<!--  <p>遅延証明書<br class="v2_showPc">（15分程度の遅延）</p>  -->', "", $contents);
             $a = preg_match('/<div class="v2_mt0 v2_headingH3">(.*)<div class="v2_headingH3">/s', $contents, $matches);
             str_replace($delay_text, "", $matches[1], $count);
